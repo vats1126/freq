@@ -31,9 +31,12 @@ export class SupabaseAuthError extends Error {
   }
 }
 
+const DEFAULT_SUPABASE_URL = "https://wipkaskntseobnzpecdh.supabase.co";
+const DEFAULT_SUPABASE_KEY = "sb_publishable_RkLnMEPrji6BhI8AsjaX7w_B5cWnD_B";
+
 function config() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL)?.replace(/\/$/, "");
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || DEFAULT_SUPABASE_KEY;
   if (!url || !key) throw new SupabaseAuthError("Authentication is not configured yet. Add the Supabase URL and publishable key to .env.local.", 503);
   return { url, key };
 }
