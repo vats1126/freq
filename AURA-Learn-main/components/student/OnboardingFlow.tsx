@@ -61,7 +61,7 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
     setError(null);
     try {
       const chosenInterests = interests.length > 0 ? interests : ["technology" as Interest];
-      const res = await fetch("/api/student/profile", {
+      await fetch("/api/student/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,13 +72,11 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
           learningPreference: preference,
           onboarded: true,
         }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error ?? "Couldn't save your choices.");
+      }).catch(() => null);
+    } catch {
+      // Continue navigation even if background save had an issue
+    } finally {
       window.location.href = "/student/learn";
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
-      setSaving(false);
     }
   }
 

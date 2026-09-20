@@ -11,21 +11,23 @@
 
 const isProduction = process.env.NODE_ENV === "production";
 
+const DEFAULT_KEA_URL = "https://freq-pink.vercel.app/";
+const DEFAULT_AURA_URL = "https://freq-a3cw.vercel.app/";
+
 // KEA Configuration:
-// In production, require NEXT_PUBLIC_KEA_URL. In development, fallback to localhost:3001.
+// In production, uses NEXT_PUBLIC_KEA_URL or fallback to deployed Vercel instance. In dev, falls back to localhost:3001.
 const keaEnvUrl = process.env.NEXT_PUBLIC_KEA_URL;
 const keaDevUrl = "http://localhost:3001";
-const keaUrl = keaEnvUrl || (!isProduction ? keaDevUrl : "");
-const keaAvailable = Boolean(keaEnvUrl || !isProduction);
+const keaUrl = keaEnvUrl || (!isProduction ? keaDevUrl : DEFAULT_KEA_URL);
+const keaAvailable = Boolean(keaUrl);
 
 // AURA Configuration:
-// Standardized on NEXT_PUBLIC_AURA_URL with NEXT_PUBLIC_AURA_LEARN_URL as legacy fallback.
-// In development, fallback to localhost:3002. In production, require an explicit environment variable.
+// In production, uses NEXT_PUBLIC_AURA_URL or fallback to deployed Vercel instance. In dev, falls back to localhost:3002.
 const auraEnvUrl =
   process.env.NEXT_PUBLIC_AURA_URL || process.env.NEXT_PUBLIC_AURA_LEARN_URL;
 const auraDevUrl = "http://localhost:3002";
-const auraUrl = auraEnvUrl || (!isProduction ? auraDevUrl : "");
-const auraAvailable = Boolean(auraEnvUrl || !isProduction);
+const auraUrl = auraEnvUrl || (!isProduction ? auraDevUrl : DEFAULT_AURA_URL);
+const auraAvailable = Boolean(auraUrl);
 
 export const products = {
   kea: {
