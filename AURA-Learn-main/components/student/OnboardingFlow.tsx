@@ -48,7 +48,7 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
     if (building < 0) return;
     if (building >= BUILD_STEPS(interests).length) {
       const t = window.setTimeout(() => {
-        router.push(editMode ? "/student/profile" : "/student");
+        router.push(editMode ? "/student/profile" : "/student/learn");
         router.refresh();
       }, 700);
       return () => window.clearTimeout(t);
