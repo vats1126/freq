@@ -82,10 +82,8 @@ export function describeWindow(current: Level, windowAttempts: Attempt[]): Level
 /**
  * Choose the next question.
  *  1. An unseen question at the student's level (not shown earlier this session).
- *  2. If that level is exhausted, an unseen question at the nearest level. This avoids recycling an
- *     MCQ while the session still has fresh questions to show.
- *  3. Only after the session has exhausted the topic bank, the least recently seen question is reused
- *     (never the one just shown).
+ *  2. If that level is exhausted, repeat questions at the same level (never the one just shown).
+ *  3. Fall back to neighbouring levels only when the level has no other candidate.
  * Within a pool, questions the student has never attempted come first, then the least recently attempted.
  */
 export function pickQuestion(opts: {
@@ -104,14 +102,31 @@ export function pickQuestion(opts: {
 
   const just = exclude[exclude.length - 1];
   const shownThisSession = new Set(exclude);
-  const levels = ([1, 2, 3, 4] as Level[]).sort((a, b) => Math.abs(a - level) - Math.abs(b - level) || a - b);
 
-  // Prefer new material across the whole topic before repeating any card. In particular, an MCQ that
-  // has already appeared in this session cannot come back while another unseen question is available.
-  for (const l of levels) {
-    const atLevel = questions.filter((q) => q.level === l);
-    const fresh = atLevel.filter((q) => !shownThisSession.has(q.id));
+  // 1. Fresh question at the student's level
+  const atLevel = questions.filter((q) => q.level === level);
+  const freshAtLevel = atLevel.filter((q) => !shownThisSession.has(q.id));
+  if (freshAtLevel.length) return order(freshAtLevel)[0];
+
+  // 2. Repeat at the same level (excluding the question just shown)
+  const repeatAtLevel = atLevel.filter((q) => q.id !== just);
+  if (repeatAtLevel.length) return order(repeatAtLevel)[0];
+
+  // 3. Fall back to neighbouring levels if this level has no other candidate
+  const otherLevels = ([1, 2, 3, 4] as Level[])
+    .filter((l) => l !== level)
+    .sort((a, b) => Math.abs(a - level) - Math.abs(b - level) || a - b);
+
+  for (const l of otherLevels) {
+    const atL = questions.filter((q) => q.level === l);
+    const fresh = atL.filter((q) => !shownThisSession.has(q.id));
     if (fresh.length) return order(fresh)[0];
+  }
+
+  for (const l of otherLevels) {
+    const atL = questions.filter((q) => q.level === l);
+    const repeat = atL.filter((q) => q.id !== just);
+    if (repeat.length) return order(repeat)[0];
   }
 
   const repeat = questions.filter((q) => q.id !== just);

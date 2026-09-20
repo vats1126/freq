@@ -45,10 +45,29 @@ export async function PATCH(request: Request) {
   if (body.onboarded !== undefined) patch.onboarded = !!body.onboarded;
 
   const result = mutate((s) => {
-    const u = s.users.find((x) => x.id === user.id)!;
-    const p = s.studentProfiles.find((x) => x.studentId === user.id)!;
-    const interests = patch.interests ?? p.interests;
-    if (patch.onboarded && interests.length === 0) return { error: "Pick at least one interest so AURA can personalise your learning." };
+    let u = s.users.find((x) => x.id === user.id);
+    if (!u) {
+      u = { id: user.id, name: user.name, email: user.email, role: "student", grade: 9, createdAt: new Date().toISOString() };
+      s.users.push(u);
+    }
+    let p = s.studentProfiles.find((x) => x.studentId === user.id);
+    if (!p) {
+      p = {
+        studentId: user.id,
+        onboarded: false,
+        learningPace: 70,
+        confidence: 70,
+        engagement: 70,
+        interests: [],
+        classId: "class-9a",
+      };
+      s.studentProfiles.push(p);
+    }
+    let interests = patch.interests ?? p.interests;
+    if (patch.onboarded && interests.length === 0) {
+      interests = ["technology"];
+      p.interests = interests;
+    }
     if (patch.name !== undefined) u.name = patch.name;
     if (patch.grade !== undefined) u.grade = patch.grade;
     if (patch.school !== undefined) u.school = patch.school || undefined;
@@ -57,6 +76,5 @@ export async function PATCH(request: Request) {
     if (patch.onboarded !== undefined) p.onboarded = patch.onboarded;
     return { user: u, profile: p };
   });
-  if ("error" in result) return fail(result.error!);
   return ok(result);
 }

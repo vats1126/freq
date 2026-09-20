@@ -28,8 +28,8 @@ function profile(studentId: string, p: Partial<StudentProfile> = {}): StudentPro
 }
 
 const studentProfiles: StudentProfile[] = [
-  // Aarav has not onboarded yet: the demo starts with him choosing his interests.
-  profile("u-aarav", { onboarded: false, learningPace: 82, confidence: 61, engagement: 89 }),
+  // Aarav demo student is onboarded so learners can enter learning directly.
+  profile("u-aarav", { onboarded: true, learningPace: 82, confidence: 61, engagement: 89 }),
   profile("u-meera", { interests: ["art", "animals"], learningPace: 88, confidence: 84 }),
   profile("u-kabir", { interests: ["sports"], learningPace: 64, confidence: 55 }),
   profile("u-ananya", { interests: ["technology"], learningPace: 79, confidence: 72 }),
@@ -146,11 +146,28 @@ export function buildSeed(now: Date = new Date()): Store {
     themeCache: [],
   };
 
-  const rows: Mastery[] = topics.map((t) => ({
-    studentId: "u-aarav", topicId: t.id, score: 0, attempts: 0, accuracy: 0, lastActivity: null,
-    level: START_LEVEL[t.id] ?? 1, levelChangedAt: lastByTopic.get(t.id) ?? now.toISOString(),
-  }));
+  const rows: Mastery[] = [];
+  for (const u of users) {
+    if (u.role === "student") {
+      for (const t of topics) {
+        rows.push({
+          studentId: u.id,
+          topicId: t.id,
+          score: 0,
+          attempts: 0,
+          accuracy: 0,
+          lastActivity: null,
+          level: u.id === "u-aarav" ? (START_LEVEL[t.id] ?? 1) : 1,
+          levelChangedAt: (u.id === "u-aarav" ? lastByTopic.get(t.id) : undefined) ?? now.toISOString(),
+        });
+      }
+    }
+  }
   store.mastery = rows;
-  recomputeStudentMastery(store, "u-aarav", now);
+  for (const u of users) {
+    if (u.role === "student") {
+      recomputeStudentMastery(store, u.id, now);
+    }
+  }
   return store;
 }

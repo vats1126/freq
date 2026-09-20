@@ -48,14 +48,39 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
     if (building < 0) return;
     if (building >= BUILD_STEPS(interests).length) {
       const t = window.setTimeout(() => {
-        router.push(editMode ? "/student/profile" : "/student/learn");
-        router.refresh();
+        window.location.href = editMode ? "/student/profile" : "/student/learn";
       }, 700);
       return () => window.clearTimeout(t);
     }
     const t = window.setTimeout(() => setBuilding((b) => b + 1), 650);
     return () => window.clearTimeout(t);
-  }, [building, interests, editMode, router]);
+  }, [building, interests, editMode]);
+
+  async function skipToLearning() {
+    setSaving(true);
+    setError(null);
+    try {
+      const chosenInterests = interests.length > 0 ? interests : ["technology" as Interest];
+      const res = await fetch("/api/student/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim() || initial.name,
+          grade,
+          school: school.trim(),
+          interests: chosenInterests,
+          learningPreference: preference,
+          onboarded: true,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) throw new Error(json.error ?? "Couldn't save your choices.");
+      window.location.href = "/student/learn";
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+      setSaving(false);
+    }
+  }
 
   async function finish() {
   setSaving(true);
@@ -81,9 +106,7 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
       throw new Error(json.error ?? "Couldn't save your choices.");
     }
 
-    // Successfully completed onboarding — go to student dashboard
-    router.push(editMode ? "/student/profile" : "/student");
-    router.refresh();
+    setBuilding(0);
   } catch (e) {
     setError(
       e instanceof Error
@@ -133,7 +156,19 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
       <div className="mb-8">
         <div className="mb-3 flex items-center justify-between text-sm">
           <span className="font-medium">{STEPS[step]}</span>
-          <span className="text-muted">Step {step + 1} of {STEPS.length}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-muted">Step {step + 1} of {STEPS.length}</span>
+            {!editMode && (
+              <button
+                type="button"
+                onClick={skipToLearning}
+                disabled={saving}
+                className="text-xs font-semibold text-brand underline-offset-4 hover:underline"
+              >
+                Skip to Learn &rarr;
+              </button>
+            )}
+          </div>
         </div>
         <ProgressBar value={((step + 1) / STEPS.length) * 100} label={`Step ${step + 1} of ${STEPS.length}`} />
       </div>
@@ -205,15 +240,22 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
         <Button variant="ghost" onClick={() => setStep((s) => s - 1)} disabled={step === 0 || saving} iconLeft={<ArrowLeft className="size-4" />} className={cn(step === 0 && "invisible")}>
           Back
         </Button>
-        {step < STEPS.length - 1 ? (
-          <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext} iconRight={<ArrowRight className="size-4" />} size="lg">
-            Continue
-          </Button>
-        ) : (
-          <Button onClick={finish} loading={saving} size="lg" iconRight={<ArrowRight className="size-4" />}>
-            {editMode ? "Save changes" : "Build my path"}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {!editMode && (
+            <Button variant="ghost" onClick={skipToLearning} disabled={saving} size="lg">
+              Skip for now
+            </Button>
+          )}
+          {step < STEPS.length - 1 ? (
+            <Button onClick={() => setStep((s) => s + 1)} disabled={!canNext} iconRight={<ArrowRight className="size-4" />} size="lg">
+              Continue
+            </Button>
+          ) : (
+            <Button onClick={finish} loading={saving} size="lg" iconRight={<ArrowRight className="size-4" />}>
+              {editMode ? "Save changes" : "Build my path"}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -190,8 +190,21 @@ export interface TopicEngine {
 
 export function getTopicEngine(store: Store, studentId: string, topicId: string, now = new Date()): TopicEngine | null {
   const topic = store.topics.find((t) => t.id === topicId);
-  const row = getMasteryRow(store, studentId, topicId);
-  if (!topic || !row) return null;
+  if (!topic) return null;
+  let row = getMasteryRow(store, studentId, topicId);
+  if (!row) {
+    row = {
+      studentId,
+      topicId,
+      score: 0,
+      attempts: 0,
+      accuracy: 0,
+      lastActivity: null,
+      level: 1,
+      levelChangedAt: now.toISOString(),
+    };
+    store.mastery.push(row);
+  }
   const ctx = buildContext(store, studentId);
   const score = scoreTopicAt(ctx, topicId, now);
   const attempts = topicAttempts(store, studentId, topicId);

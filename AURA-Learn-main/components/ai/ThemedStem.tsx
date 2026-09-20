@@ -100,7 +100,8 @@ export function ThemedStem({ questionId, originalStem, interests, onResolved, on
       {interests.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2" role="group" aria-label="Question theme">
           {interests.map((id) => {
-            const meta = INTEREST_OPTIONS.find((o) => o.id === id)!;
+            const meta = INTEREST_OPTIONS.find((o) => o.id === id);
+            if (!meta) return null;
             const Icon = meta.icon;
             const on = choice === id;
             return (

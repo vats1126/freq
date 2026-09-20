@@ -10,10 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
   const user = await requireUser("student");
-  const profile = getStudentProfile(user.id)!;
+  const profile = getStudentProfile(user.id);
   const { edit } = await searchParams;
   const editMode = edit === "1";
-  if (profile.onboarded && !editMode) redirect("/student");
+  if (profile?.onboarded && !editMode) redirect("/student/learn");
 
   return (
     <div className="min-h-dvh">
@@ -24,7 +24,13 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
       <main className="px-4 pb-16 pt-4 sm:px-8 sm:pt-10">
         <OnboardingFlow
           editMode={editMode}
-          initial={{ name: user.name, grade: user.grade ?? 9, school: user.school ?? "", interests: profile.interests, preference: profile.learningPreference ?? null }}
+          initial={{
+            name: user.name,
+            grade: user.grade ?? 9,
+            school: user.school ?? "",
+            interests: profile?.interests ?? [],
+            preference: profile?.learningPreference ?? null,
+          }}
         />
       </main>
     </div>

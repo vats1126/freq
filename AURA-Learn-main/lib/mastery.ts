@@ -146,5 +146,19 @@ export function recomputeStudentMastery(store: Store, studentId: string, now = n
 }
 
 export function getMasteryRow(store: Store, studentId: string, topicId: string): Mastery | undefined {
-  return store.mastery.find((m) => m.studentId === studentId && m.topicId === topicId);
+  let row = store.mastery.find((m) => m.studentId === studentId && m.topicId === topicId);
+  if (!row && store.topics.some((t) => t.id === topicId)) {
+    row = {
+      studentId,
+      topicId,
+      score: 0,
+      attempts: 0,
+      accuracy: 0,
+      lastActivity: null,
+      level: INITIAL_LEVEL,
+      levelChangedAt: new Date().toISOString(),
+    };
+    store.mastery.push(row);
+  }
+  return row;
 }

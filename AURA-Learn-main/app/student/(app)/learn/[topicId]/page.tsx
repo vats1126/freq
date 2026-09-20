@@ -31,12 +31,15 @@ export default async function TopicPage({ params, searchParams }: { params: Prom
   // Locked topics are blocked here, on the server, not just visually on the path.
   if (topic.locked) redirect(`/student/path?course=${topic.subjectId}&gap=${topic.id}`);
 
-  const course = state.courses.find((c) => c.subjectId === topic.subjectId)!;
+  const course = state.courses.find((c) => c.subjectId === topic.subjectId);
+  if (!course) notFound();
   const pref = state.profile.learningPreference;
   const labs = labsForTopic(topic.id).map((l) => ({ id: l.id, title: l.title, blurb: l.blurb, minutes: l.minutes, best: state.labCompleted[l.id] ?? null }));
   const initialTab: WorkspaceTab = tab === "learn" || tab === "practice" || tab === "lab" || tab === "insights" ? tab : pref === "practice-first" && topic.started ? "practice" : "learn";
-  const engine = getTopicEngine(getStore(), user.id, topic.id)!;
-  const blocks = engine.intervention?.blocksTopicId ? state.topics.find((t) => t.id === engine.intervention!.blocksTopicId) : undefined;
+  const engine = getTopicEngine(getStore(), user.id, topic.id);
+  if (!engine) notFound();
+  const blocksTopicId = engine.intervention?.blocksTopicId;
+  const blocks = blocksTopicId ? state.topics.find((t) => t.id === blocksTopicId) : undefined;
 
   const analogies = state.profile.interests
     .map((interest) => ({ interest, text: analogyFor(topic.id, interest) }))
