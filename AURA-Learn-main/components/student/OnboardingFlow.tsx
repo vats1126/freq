@@ -58,22 +58,41 @@ export function OnboardingFlow({ initial, editMode }: { initial: Initial; editMo
   }, [building, interests, editMode, router]);
 
   async function finish() {
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/student/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), grade, school: school.trim(), interests, learningPreference: preference, onboarded: true }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error ?? "Couldn't save your choices.");
-      setBuilding(0);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
-      setSaving(false);
+  setSaving(true);
+  setError(null);
+
+  try {
+    const res = await fetch("/api/student/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name.trim(),
+        grade,
+        school: school.trim(),
+        interests,
+        learningPreference: preference,
+        onboarded: true,
+      }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok || !json.ok) {
+      throw new Error(json.error ?? "Couldn't save your choices.");
     }
+
+    // Successfully completed onboarding — go to student dashboard
+    router.push(editMode ? "/student/profile" : "/student");
+    router.refresh();
+  } catch (e) {
+    setError(
+      e instanceof Error
+        ? e.message
+        : "Something went wrong. Please try again."
+    );
+    setSaving(false);
   }
+}
 
   function toggleInterest(id: Interest) {
     setInterests((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
